@@ -1,146 +1,362 @@
-================================================================
- Mechanism-Aware, Leakage-Controlled Bayesian SHM Framework
- Reproducible code package
-================================================================
+# Leakage-Controlled, Mechanism-Aware Bayesian Condition Assessment of RC Frames
 
-Reproduces the full analysis and figures for the paper
-"Mechanism-Aware Bayesian Condition Assessment of RC Frames:
- Leakage-Controlled Finite-Element Training and Experimental Validation."
+This repository provides the reproducible code package for the manuscript:
 
-Contains: the numbered analysis pipeline (stages 01-07), the OpenSeesPy
-finite element validation models (05a, 05b), the generated datasets
-(so you can run without re-running OpenSees), and resumable runners for
-the slow cross-validation step.
+**Leakage-controlled, mechanism-aware Bayesian condition assessment of RC frames using finite-element training data and experimental demonstration**
 
-----------------------------------------------------------------
-1. SETUP   (Python 3.11 or 3.12)
-----------------------------------------------------------------
-    python -m venv venv
-    # Windows:        venv\Scripts\activate
-    # macOS / Linux:  source venv/bin/activate
-    pip install -r requirements.txt
+The package reproduces the finite-element-derived dataset, categorical evidence tables, Bayesian-network and machine-learning evaluations, leakage-control analysis, hybrid-model results, external experimental demonstration, and manuscript figures/tables.
 
-Analysis only (skip openseespy):
-    pip install numpy pandas scikit-learn matplotlib pgmpy
+The generated finite element dataset is included under `data/`, so the main analysis can be reproduced without rerunning OpenSeesPy. OpenSeesPy is required only to regenerate the 528-case FE dataset from scratch or to rerun the two finite element validation models.
 
-----------------------------------------------------------------
-2. QUICK START  (reproduces all tables and figures)
-----------------------------------------------------------------
-The FE dataset is already in data/, so run the analysis directly:
+---
 
-    python run_all.py
+## 1. Repository contents
 
-Writes results/ (cv_results.csv, leakage_scores.csv,
-table1_model_comparison.csv, table2_external_validation.csv,
-hybrid_results.csv) and figures/ (fig1 ... fig9).
+The repository is organized as a numbered analysis pipeline.
 
-To also regenerate the 528-case FE dataset (slow; needs openseespy):
-    python run_all.py --full
+```text
+config.py                              Shared paths, constants, target names, and plotting settings
 
-----------------------------------------------------------------
-3. PIPELINE STAGES
-----------------------------------------------------------------
-config.py   shared paths, constants, plotting style, target names.
+01_generate_fe_dataset.py              Generates the 528-case nonlinear FE dataset
+02_labels_and_dataset_figures.py       Defines targets, evidence states, and dataset figures
+03_evaluate.py                         Runs Bayesian-network and baseline-model evaluations
+04_hybrid.py                           Runs the hybrid Bayesian-posterior + gradient-boosting model
+05a_fe_existing_frame.py               OpenSeesPy validation model for the existing deficient frame
+05b_fe_dj1_stilted.py                  OpenSeesPy validation model for the DJ-1 stilted frame
+06_measured_features.py                Extracts scalar features from measured cyclic records
+07_external_validation.py              Performs external experimental condition assessment
 
-01_generate_fe_dataset.py            [needs openseespy; slow]
-    528 nonlinear pushover analyses (fiber beam-column, Concrete02/Steel02)
-    over full-scale, lab-scale, stilted frames, stratified by geometry,
-    scale, mechanism.  -> data/fem_dataset_528.csv
+run_all.py                             Runs the full reproducible workflow
+run_kfold_only.py                      Optional resumable repeated k-fold helper
+run_rc_only.py                         Optional helper for rerunning residual-capacity evaluation
+requirements.txt                       Python dependency list
+```
 
-02_labels_and_dataset_figures.py
-    CODE-BASED target thresholds:
-      DamageState      ASCE 41 drift   0.5 / 1 / 2 %  (none/minor/moderate/severe)
-      StiffnessLoss    cracked-section 60 / 80 % loss (low/medium/high)
-      ResidualCapacity binary failed / retained at 0.8 Vmax
-    Builds categorical evidence incl. same-scalar leakage nodes
-    (re-binned at the SAME code limit states as their target).
-    -> data/fem_dataset_categorical.csv, figures/fig1, fig2
+---
 
-03_evaluate.py                       [slowest analysis step; minutes]
-    Bayesian network (expert DAG, BDeu) vs tuned class-balanced baselines
-    (random forest, HistGradientBoosting, logistic regression, dummy).
-    Three evidence regimes; repeated 5-fold and leave-one-geometry-out.
-    Computes the leakage score.
-    -> results/cv_results.csv, leakage_scores.csv,
-       table1_model_comparison.csv, figures/fig3,4,5,7
+## 2. Software requirements
 
-04_hybrid.py
-    Gradient boosting augmented with Bayesian posteriors.
-    -> results/hybrid_results.csv, figures/fig6
+The code was tested with **Python 3.11-3.12**.
 
-06_measured_features.py
-    Scalar condition features from the four measured cyclic records.
-    -> data/measured_frame_features.csv
+Create and activate a virtual environment:
 
-07_external_validation.py
-    Infers each specimen's condition; reports P(significant damage) and
-    P(substantial stiffness loss).
-    -> results/table2_external_validation.csv, figures/fig8, fig9
+```bash
+python -m venv venv
+```
 
-----------------------------------------------------------------
-4. FINITE ELEMENT VALIDATION MODELS (OpenSeesPy)
-----------------------------------------------------------------
-05a_fe_existing_frame.py
-    Existing deficient RC frame (EF, Wahab 2023). Full FEMA-461 cyclic
-    protocol, robust recursive-bisection solver, genuine descending branch.
-05b_fe_dj1_stilted.py
-    Stilted frame DJ-1 (story-stiffness ratio 40, Li et al. 2023), backbone
-    anchored to the digitized envelope and reported table values.
-Run directly, e.g.:  python 05a_fe_existing_frame.py
+On Windows:
 
-----------------------------------------------------------------
-5. RESUMABLE CROSS-VALIDATION HELPERS (optional)
-----------------------------------------------------------------
-If 03 is too slow to finish at once:
-    python run_kfold_only.py    # -> results/_kfold_partial.csv (all 3 targets)
-    python run_rc_only.py       # re-run only ResidualCapacity if needed
-Then re-run 03 to assemble cv_results/leakage/table1 + figures from the
-checkpoint plus the fast LOGO step.
+```bash
+venv\Scripts\activate
+```
 
-----------------------------------------------------------------
-6. DATA FILES
-----------------------------------------------------------------
-data/fem_dataset_528.csv            generated FE dataset (528 cases)
-data/fem_dataset_categorical.csv    categorical encoding used by the models
-data/measured_existing_frame.csv    EF measured cyclic record
-data/measured_prestress_frame.csv   RF measured cyclic record
-data/measured_DJ2_hysteresis.csv    DJ-2 measured cyclic record
-data/DJ1_backbone_from_figure.csv   DJ-1 digitized backbone + table anchors
-data/measured_frame_features.csv    extracted scalar features (stage 06)
+On macOS or Linux:
 
-----------------------------------------------------------------
-7. ENVIRONMENT NOTES
-----------------------------------------------------------------
-- scikit-learn: f1_score uses zero_division=0; one-hot features cast to float.
-- pgmpy 1.x: BDeu parameter learning; exact inference (VariableElimination).
-- numpy: uses np.trapezoid (replace with np.trapz on older numpy).
-- Reported numbers (code-based thresholds, tuned models, binary RC):
-      leakage scores         ~ 0.17 / 0.19 / 0.17 (DS / SL / RC)
-      GBM full -> controlled : 1.00 -> 0.84 / 0.80 / 0.83
-      best baseline          : ~0.85 / 0.84 / 0.84
-      Bayesian net (5-fold)  : 0.74 / 0.76 / 0.73
-      Bayesian net (LOGO)    : 0.68 / 0.64 / 0.67
-      hybrid                 : 0.84 / 0.82 / 0.83
-      external validation    : P(damage) 0.61-1.00, P(stiffness) 0.83-0.89
-================================================================
-# Python dependencies for the RC-frame Bayesian SHM framework
-# Tested with Python 3.11-3.12.
-#
-# Install with:
-#     pip install -r requirements.txt
-#
-# Notes:
-#  - openseespy is required ONLY to (a) regenerate the FE dataset from scratch
-#    (stage 01, run_all.py --full) and (b) run the FE validation models
-#    (05a, 05b). The analysis pipeline (stages 02-07) runs without it because
-#    the generated dataset CSVs are included under data/.
-#  - pgmpy 1.x changed several APIs; pin to >=1.0 to match this code
-#    (BayesianEstimator.get_parameters with prior_type / equivalent_sample_size;
-#    LogisticRegression has no multi_class argument in recent scikit-learn).
+```bash
+source venv/bin/activate
+```
 
-numpy>=1.26
-pandas>=2.0
-scikit-learn>=1.4
-matplotlib>=3.7
-pgmpy>=1.0
-openseespy>=3.5.0
+Install all dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+For analysis only, without regenerating the OpenSeesPy finite element models, the essential packages are:
+
+```bash
+pip install numpy pandas scikit-learn matplotlib pgmpy
+```
+
+OpenSeesPy is required only for:
+
+1. regenerating the FE dataset using `01_generate_fe_dataset.py` or `run_all.py --full`; and
+2. running the FE validation scripts `05a_fe_existing_frame.py` and `05b_fe_dj1_stilted.py`.
+
+---
+
+## 3. Quick start
+
+Because the generated FE dataset is included in `data/`, the main results can be reproduced directly:
+
+```bash
+python run_all.py
+```
+
+This command writes the main outputs to:
+
+```text
+results/
+figures/
+```
+
+Typical result files include:
+
+```text
+results/cv_results.csv
+results/leakage_scores.csv
+results/table1_model_comparison.csv
+results/table2_external_validation.csv
+results/hybrid_results.csv
+```
+
+To regenerate the 528-case FE dataset from scratch, run:
+
+```bash
+python run_all.py --full
+```
+
+This option is slower and requires OpenSeesPy.
+
+---
+
+## 4. Pipeline stages
+
+### Stage 01: Finite element dataset generation
+
+```bash
+python 01_generate_fe_dataset.py
+```
+
+Generates the 528-case nonlinear pushover dataset using fiber beam-column models with Concrete02 and Steel02 material models. The dataset spans full-scale regular frames, laboratory-scale regular frames, and vertically irregular stilted frames.
+
+Output:
+
+```text
+data/fem_dataset_528.csv
+```
+
+This stage requires OpenSeesPy and may take substantially longer than the analysis-only stages.
+
+### Stage 02: Target labels and categorical evidence
+
+```bash
+python 02_labels_and_dataset_figures.py
+```
+
+Defines the three condition targets and categorical evidence variables.
+
+Target definitions:
+
+| Target | Defining response quantity | Classes |
+|---|---|---|
+| Damage state | Peak inter-story drift ratio | none, IO, LS, CP |
+| Stiffness loss | Fractional secant-stiffness loss | low, medium, high |
+| Residual capacity | Post-peak strength retention | failed, retained |
+
+Thresholds used in the manuscript:
+
+- Damage state: 0.5%, 1.0%, and 2.0% drift thresholds.
+- Stiffness loss: 60% and 80% fractional stiffness-loss thresholds.
+- Residual capacity: binary classification at 0.8 Vmax.
+
+Outputs:
+
+```text
+data/fem_dataset_categorical.csv
+figures/
+```
+
+### Stage 03: Bayesian network, baselines, and leakage control
+
+```bash
+python 03_evaluate.py
+```
+
+Evaluates the expert-specified Bayesian network, logistic regression, random forest, gradient boosting, and majority-class baseline.
+
+The stage evaluates three evidence regimes:
+
+1. full evidence;
+2. leakage-controlled evidence; and
+3. design-only evidence.
+
+The leakage-controlled regime removes the same-scalar evidence node that directly re-bins the response quantity used to define each target.
+
+Outputs:
+
+```text
+results/cv_results.csv
+results/leakage_scores.csv
+results/table1_model_comparison.csv
+figures/
+```
+
+### Stage 04: Hybrid model
+
+```bash
+python 04_hybrid.py
+```
+
+Runs the hybrid model in which Bayesian posterior probabilities are used as additional structured features for gradient boosting. Posterior probabilities used as gradient-boosting inputs are generated within the training folds to avoid using posterior estimates fitted on the same test cases.
+
+Outputs:
+
+```text
+results/hybrid_results.csv
+figures/
+```
+
+### Stage 05: Finite element validation models
+
+Two OpenSeesPy validation models are provided.
+
+```bash
+python 05a_fe_existing_frame.py
+python 05b_fe_dj1_stilted.py
+```
+
+`05a_fe_existing_frame.py` models the existing deficient RC frame from Wahab et al. (2023) using a FEMA-461 cyclic loading protocol and a robust recursive-bisection solver.
+
+`05b_fe_dj1_stilted.py` models the DJ-1 stilted frame with a story-stiffness ratio of 40, based on the Li et al. (2023) experimental program. The backbone response is anchored to the digitized experimental envelope and reported tabulated values.
+
+### Stage 06: Measured experimental features
+
+```bash
+python 06_measured_features.py
+```
+
+Extracts scalar condition features from four measured cyclic records:
+
+```text
+data/measured_existing_frame.csv
+data/measured_prestress_frame.csv
+data/measured_DJ2_hysteresis.csv
+data/DJ1_backbone_from_figure.csv
+```
+
+Output:
+
+```text
+data/measured_frame_features.csv
+```
+
+### Stage 07: External experimental demonstration
+
+```bash
+python 07_external_validation.py
+```
+
+Infers the condition of four physically tested RC frames and reports the probability of significant damage and the probability of substantial stiffness loss.
+
+Outputs:
+
+```text
+results/table2_external_validation.csv
+figures/
+```
+
+---
+
+## 5. Data files
+
+The principal data files are:
+
+```text
+data/fem_dataset_528.csv              Generated 528-case finite element dataset
+data/fem_dataset_categorical.csv      Categorical evidence table used by the models
+data/measured_existing_frame.csv      Existing deficient frame measured cyclic record
+data/measured_prestress_frame.csv     Retrofitted frame measured cyclic record
+data/measured_DJ2_hysteresis.csv      DJ-2 measured cyclic record
+data/DJ1_backbone_from_figure.csv     DJ-1 digitized backbone and tabulated anchors
+data/measured_frame_features.csv      Extracted scalar features for physical specimens
+```
+
+The measured experimental data are included only in processed form for reproducibility and should be cited to the corresponding original experimental sources.
+
+---
+
+## 6. Resumable cross-validation helpers
+
+The repeated cross-validation stage is the slowest analysis step. If it does not finish in one run, use:
+
+```bash
+python run_kfold_only.py
+```
+
+This creates:
+
+```text
+results/_kfold_partial.csv
+```
+
+To rerun only the residual-capacity evaluation:
+
+```bash
+python run_rc_only.py
+```
+
+After generating the partial checkpoint, rerun:
+
+```bash
+python 03_evaluate.py
+```
+
+This assembles the final cross-validation results, leakage scores, model-comparison table, and related figures.
+
+---
+
+## 7. Implementation notes
+
+Finite element analyses were performed using OpenSeesPy. Data processing, Bayesian-network inference, machine-learning classification, validation, and plotting were implemented in Python.
+
+Important implementation details:
+
+- Bayesian-network learning and inference use `pgmpy`.
+- Conditional probability tables are estimated using BDeu parameter learning.
+- The BDeu equivalent sample size is 10.
+- Posterior inference is performed using exact variable elimination.
+- Machine-learning baselines are implemented using `scikit-learn`.
+- Macro F1 is computed with `zero_division=0`.
+- One-hot encoded categorical features are cast to floating-point values.
+- `numpy.trapezoid` is used for numerical integration; use `numpy.trapz` only if running an older NumPy version.
+
+---
+
+## 8. Main reproduced results
+
+The package reproduces the following manuscript-level numerical results.
+
+| Result | Values |
+|---|---|
+| Gradient boosting full evidence macro F1 | 1.000 / 1.000 / 1.000 |
+| Gradient boosting leakage-controlled macro F1 | 0.840 / 0.803 / 0.833 |
+| Leakage scores | 0.160 / 0.197 / 0.167 |
+| Bayesian network repeated 3x5-fold macro F1 | 0.741 / 0.757 / 0.732 |
+| Bayesian network leave-one-geometry-out macro F1 | 0.677 / 0.642 / 0.674 |
+| Hybrid model macro F1 | 0.841 / 0.820 / 0.834 |
+| External P(significant damage) | 0.61-1.00 |
+| External P(substantial stiffness loss) | 0.83-0.89 |
+
+The target order is:
+
+```text
+Damage state / Stiffness loss / Residual capacity
+```
+
+---
+
+## 9. Citation
+
+If you use this repository, cite the associated manuscript:
+
+```text
+Wahab, A. G., Tao, Z., & Clementi, F. Leakage-controlled, mechanism-aware Bayesian condition assessment of RC frames using finite-element training data and experimental demonstration.
+```
+
+Replace this entry with the final journal citation after publication.
+
+---
+
+## 10. License
+
+Add the repository license before public release. Recommended options are:
+
+- MIT License for code; and
+- CC BY 4.0 for processed data and documentation, where permitted by the original data sources.
+
+---
+
+## 11. Contact
+
+For questions about the repository or manuscript, contact the corresponding author listed in the manuscript.
