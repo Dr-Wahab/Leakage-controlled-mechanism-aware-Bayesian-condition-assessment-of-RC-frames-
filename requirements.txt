@@ -5,13 +5,11 @@
 #     pip install -r requirements.txt
 #
 # Notes:
-#  - openseespy is required ONLY to (a) regenerate the FE dataset from scratch
-#    (stage 01, run_all.py --full) and (b) run the FE validation models
-#    (05a, 05b). The analysis pipeline (stages 02-07) runs without it because
-#    the generated dataset CSVs are included under data/.
-#  - pgmpy 1.x changed several APIs; pin to >=1.0 to match this code
-#    (BayesianEstimator.get_parameters with prior_type / equivalent_sample_size;
-#    LogisticRegression has no multi_class argument in recent scikit-learn).
+# - openseespy is required only to regenerate the FE dataset from scratch
+#   and to run the finite element validation models.
+# - The analysis pipeline can be run without openseespy because the generated
+#   CSV datasets are included under data/.
+# - pgmpy >= 1.0 is required for the Bayesian-network implementation used here.
 
 numpy>=1.26
 pandas>=2.0
