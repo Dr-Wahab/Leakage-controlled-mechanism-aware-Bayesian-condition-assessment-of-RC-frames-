@@ -344,19 +344,9 @@ If you use this repository, cite the associated manuscript:
 Wahab, A. G., Tao, Z., & Clementi, F. Leakage-controlled, mechanism-aware Bayesian condition assessment of RC frames using finite-element training data and experimental demonstration.
 ```
 
-Replace this entry with the final journal citation after publication.
 
 ---
 
-## 10. License
-
-Add the repository license before public release. Recommended options are:
-
-- MIT License for code; and
-- CC BY 4.0 for processed data and documentation, where permitted by the original data sources.
-
----
-
-## 11. Contact
+## 10. Contact
 
 For questions about the repository or manuscript, contact the corresponding author listed in the manuscript.
