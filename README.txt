@@ -1,4 +1,4 @@
-# Leakage-controlled, mechanism-aware Bayesian condition assessment of RC frames using finite-element training data and experimental demonstration
+# Leakage-Controlled, Mechanism-Aware Bayesian Condition Assessment of RC Frames
 
 This repository provides the reproducible code package for the manuscript:
 
