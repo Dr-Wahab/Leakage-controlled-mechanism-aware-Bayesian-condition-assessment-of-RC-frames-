@@ -123,3 +123,24 @@ data/measured_frame_features.csv    extracted scalar features (stage 06)
       hybrid                 : 0.84 / 0.82 / 0.83
       external validation    : P(damage) 0.61-1.00, P(stiffness) 0.83-0.89
 ================================================================
+# Python dependencies for the RC-frame Bayesian SHM framework
+# Tested with Python 3.11-3.12.
+#
+# Install with:
+#     pip install -r requirements.txt
+#
+# Notes:
+#  - openseespy is required ONLY to (a) regenerate the FE dataset from scratch
+#    (stage 01, run_all.py --full) and (b) run the FE validation models
+#    (05a, 05b). The analysis pipeline (stages 02-07) runs without it because
+#    the generated dataset CSVs are included under data/.
+#  - pgmpy 1.x changed several APIs; pin to >=1.0 to match this code
+#    (BayesianEstimator.get_parameters with prior_type / equivalent_sample_size;
+#    LogisticRegression has no multi_class argument in recent scikit-learn).
+
+numpy>=1.26
+pandas>=2.0
+scikit-learn>=1.4
+matplotlib>=3.7
+pgmpy>=1.0
+openseespy>=3.5.0
