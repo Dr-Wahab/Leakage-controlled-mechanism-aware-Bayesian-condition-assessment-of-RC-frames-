@@ -263,6 +263,8 @@ data/measured_frame_features.csv      Extracted scalar features for physical spe
 ```
 
 The measured experimental data are included only in processed form for reproducibility and should be cited to the corresponding original experimental sources.
+[1] Wahab AG, Zhong T, Wei F, Hakimi N, Ahiwale DD. (2023). Seismic performance enhancement of RC framed structures through retrofitting and strengthening: an experimental and numerical study. Asian Journal of Civil Engineering, 1-19. https://doi.org/10.1007/s42107-023-00794-z 
+[2] Li R, Liu L, Li Y, Wang G. (2023). Experimental Investigate on Seismic Performance of RC Hill-Side Stilted Buildings Affected by Vertical Stiffness Irregularity. Journal of Earthquake Engineering, 28(8), 2273-91. https://doi.org/10.1080/13632469.2023.2287136 
 
 ---
 
